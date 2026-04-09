@@ -22,9 +22,11 @@ class Hub:
         # Game registration
         self.games = [
             {"name": "Gesture Pong", "status": "READY", "key": pygame.K_1},
-            {"name": "Fruit Ninja", "status": "COMING SOON", "key": pygame.K_2},
-            {"name": "Hand RPS", "status": "COMING SOON", "key": pygame.K_3},
-            {"name": "Flappy Bird", "status": "COMING SOON", "key": pygame.K_4},
+            {"name": "Fruit Ninja", "status": "READY", "key": pygame.K_2},
+            {"name": "Point Selfie", "status": "READY", "key": pygame.K_3},
+            {"name": "Flappy Bird", "status": "READY", "key": pygame.K_4},
+            {"name": "Air Drumming", "status": "READY", "key": pygame.K_5},
+            {"name": "Coming Soon", "status": "SOON", "key": pygame.K_6},
         ]
         # TODO: register new mini-game here
 
@@ -36,14 +38,17 @@ class Hub:
         self.screen.blit(title_surf, (SCREEN_WIDTH // 2 - title_surf.get_width() // 2, 60))
         
         # Grid settings
-        card_w, card_h = 240, 320
-        gap = 40
-        start_x = (SCREEN_WIDTH - (len(self.games) * card_w + (len(self.games) - 1) * gap)) // 2
-        start_y = 220
+        card_w, card_h = 240, 260
+        gap = 30
+        cols = 3
+        start_x = (SCREEN_WIDTH - (cols * card_w + (cols - 1) * gap)) // 2
+        start_y = 180
 
         for i, game in enumerate(self.games):
-            x = start_x + i * (card_w + gap)
-            y = start_y
+            row = i // cols
+            col = i % cols
+            x = start_x + col * (card_w + gap)
+            y = start_y + row * (card_h + gap)
             
             # Card background
             card_rect = pygame.Rect(x, y, card_w, card_h)
@@ -57,7 +62,7 @@ class Hub:
 
             # Game Name
             name_surf = self.name_font.render(game["name"], True, WHITE)
-            self.screen.blit(name_surf, (x + card_w // 2 - name_surf.get_width() // 2, y + 140))
+            self.screen.blit(name_surf, (x + card_w // 2 - name_surf.get_width() // 2, y + 100))
             
             # Status Badge
             status = game["status"]
@@ -74,5 +79,13 @@ class Hub:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_1:
                 return "pong"
+            if event.key == pygame.K_2:
+                return "ninja"
+            if event.key == pygame.K_3:
+                return "selfie"
+            if event.key == pygame.K_4:
+                return "flappy"
+            if event.key == pygame.K_5:
+                return "drum"
             # Keys 2, 3, 4 do nothing as status is COMING SOON
         return None

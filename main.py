@@ -9,6 +9,10 @@ import sys
 from gesture.tracker import HandTracker
 from ui.hub import Hub
 from games.pong.pong_game import PongGame
+from games.ninja.fruit_ninja import FruitNinjaGame
+from games.flappy.flappy_game import FlappyGame
+from games.selfie.point_selfie import PointSelfieGame
+from games.drum.drum_game import DrumGame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 
 def main():
@@ -30,6 +34,10 @@ def main():
     # Hub and Games
     hub = Hub(screen)
     pong = PongGame(screen, clock, tracker)
+    ninja = FruitNinjaGame(screen, clock, tracker)
+    flappy = FlappyGame(screen, clock, tracker)
+    selfie = PointSelfieGame(screen, clock, tracker)
+    drum = DrumGame(screen, clock, tracker)
     
     current_state = "HUB"
     active_game = None
@@ -52,21 +60,55 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             
+            # Global Escape Key
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                if current_state == "HUB":
+                    running = False # Quit app
+                else:
+                    current_state = "HUB" # Return to hub
+                    active_game = None
+
             if current_state == "HUB":
                 selection = hub.get_game_selection(event)
                 if selection == "pong":
                     pong.reset()
                     active_game = pong
                     current_state = "GAME"
-            
+                elif selection == "ninja":
+                    ninja.reset()
+                    active_game = ninja
+                    current_state = "GAME"
+                elif selection == "flappy":
+                    flappy.reset()
+                    active_game = flappy
+                    current_state = "GAME"
+                elif selection == "selfie":
+                    selfie.reset()
+                    active_game = selfie
+                    current_state = "GAME"
+                elif selection == "drum":
+                    drum.reset()
+                    active_game = drum
+                    current_state = "GAME"
+                
             elif current_state == "GAME":
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                    current_state = "HUB"
-                    active_game = None
+                if event.type == pygame.MOUSEBUTTONDOWN and active_game:
+                    # Check universal exit button
+                    if active_game.check_exit_click(event.pos):
+                        current_state = "HUB"
+                        active_game = None
+                    # Check game-specific buttons (like Selfie Capture)
+                    elif isinstance(active_game, PointSelfieGame):
+                        if active_game.btn_rect.collidepoint(event.pos):
+                            active_game.take_selfie(screen)
 
         # 3. Update logic
         if current_state == "GAME" and active_game:
-            active_game.update(landmarks)
+            if isinstance(active_game, PointSelfieGame):
+                active_game.update_with_frame(frame)
+            else:
+                active_game.update(landmarks)
+                
             if active_game.is_over:
                 # Wait 3 seconds then return to hub handled in draw/loop flow
                 pass
@@ -75,11 +117,23 @@ def main():
         if current_state == "HUB":
             hub.draw()
         elif current_state == "GAME" and active_game:
-            active_game.draw(screen)
+            if isinstance(active_game, PointSelfieGame):
+                active_game.draw_split(screen, frame)
+            else:
+                active_game.draw(screen)
             
-            # Show gesture overlay (PiP)
-            overlay = active_game.get_overlay_surface(frame)
-            screen.blit(overlay, (SCREEN_WIDTH - 340, 20))
+            # Draw common UI (Exit button and gesture exit detection)
+            active_game.draw_common_ui(screen, landmarks)
+            if active_game.exit_requested:
+                current_state = "HUB"
+                active_game.reset() # reset flag
+                active_game = None
+                continue
+            
+            # Show gesture overlay (PiP) - Skip for Point Selfie as it has its own camera view
+            if not isinstance(active_game, PointSelfieGame):
+                overlay = active_game.get_overlay_surface(frame)
+                screen.blit(overlay, (SCREEN_WIDTH - 340, 20))
             
             if active_game.is_over:
                 pygame.display.flip()
@@ -97,6 +151,7 @@ def main():
     # ── Cleanup ───────────────────────────────────────────────────────────────
     cap.release()
     tracker.release()
+    selfie.face_tracker.release()
     pygame.quit()
     sys.exit()
 

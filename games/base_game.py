@@ -41,6 +41,51 @@ class BaseGame(abc.ABC):
         self.tracker = tracker
         self._score: int = 0
         self._is_over: bool = False
+        self.exit_requested = False
+        self.ui_font = pygame.font.SysFont("Arial", 24, bold=True)
+        self.exit_button_rect = pygame.Rect(20, 20, 120, 40)
+        self.exit_hover_timer = 0 # for gesture exit
+
+    # ── Shared UI logic ──────────────────────────────────────────────────────
+
+    def draw_common_ui(self, screen: pygame.Surface, hand_data: Optional[List[Dict[str, Any]]] = None) -> None:
+        """Draws the universal exit button and handles gesture hover detection."""
+        # Draw button
+        color = (200, 50, 50) if self.exit_hover_timer > 0 else (150, 40, 40)
+        pygame.draw.rect(screen, color, self.exit_button_rect, border_radius=10)
+        pygame.draw.rect(screen, (255, 255, 255), self.exit_button_rect, width=2, border_radius=10)
+        
+        exit_text = self.ui_font.render("EXIT (Esc)", True, (255, 255, 255))
+        screen.blit(exit_text, (self.exit_button_rect.centerx - exit_text.get_width() // 2, 
+                               self.exit_button_rect.centery - exit_text.get_height() // 2))
+
+        # Progress bar for gesture exit if hovering
+        if self.exit_hover_timer > 0:
+            progress_w = int((self.exit_hover_timer / 90) * self.exit_button_rect.width)
+            pygame.draw.rect(screen, (0, 255, 0), (self.exit_button_rect.x, self.exit_button_rect.bottom + 5, progress_w, 5))
+
+        # Check for palm hover (gesture exit)
+        is_hovering = False
+        if hand_data:
+            for hand in hand_data:
+                cx, cy = self.tracker.get_palm_center(hand["landmarks"])
+                if self.exit_button_rect.collidepoint(cx, cy):
+                    is_hovering = True
+                    break
+        
+        if is_hovering:
+            self.exit_hover_timer += 1
+            if self.exit_hover_timer >= 90: # 1.5 seconds at 60fps (actually clock might be higher but 90 frames is a good delay)
+                self.exit_requested = True
+        else:
+            self.exit_hover_timer = 0
+
+    def check_exit_click(self, mouse_pos: Tuple[int, int]) -> bool:
+        """Returns True if the mouse clicked the exit button."""
+        if self.exit_button_rect.collidepoint(mouse_pos):
+            self.exit_requested = True
+            return True
+        return False
 
     # ── Abstract interface ────────────────────────────────────────────────────
 

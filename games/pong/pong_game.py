@@ -29,6 +29,7 @@ class PongGame(BaseGame):
         self._score = 0
         self.ai_score = 0
         self._is_over = False
+        self.exit_requested = False
         self.winner = None
         
         # Player paddle

@@ -12,6 +12,8 @@ FPS: int = 60        # base target; pong_game targets 90 and drops frames gracef
 HAND_DETECTION_CONFIDENCE: float = 0.7
 HAND_TRACKING_CONFIDENCE: float = 0.5
 MAX_NUM_HANDS: int = 2
+FACE_DETECTION_CONFIDENCE: float = 0.5
+MAX_NUM_FACES: int = 4
 
 # ── Colors (R, G, B) ─────────────────────────────────────────────────────────
 WHITE        = (255, 255, 255)
@@ -25,6 +27,10 @@ NEON_MAGENTA = (255,   0, 200)
 NEON_GREEN   = (  0, 255, 100)
 NEON_YELLOW  = (255, 230,   0)
 NEON_ORANGE  = (255, 120,   0)
+FRUIT_APPLE  = (255, 30, 60)
+FRUIT_ORANGE = (255, 165, 0)
+FRUIT_WATERMELON = (50, 205, 50)
+FRUIT_BOMB   = (50, 50, 50)
 
 # Hub palette
 HUB_BG           = (  8,   8,  18)   # near-black with a hint of blue
@@ -52,6 +58,36 @@ WINNING_SCORE: int = 7
 BALL_INITIAL_SPEED: float = 6.0
 BALL_SPEED_INCREASE: float = 1.05   # multiplicative factor per volley
 BALL_TIME_SPEED_INCREASE: float = 1.0003  # multiplicative factor per frame
+
+# ── Fruit Ninja tuning ───────────────────────────────────────────────────────
+GRAVITY: float = 0.25
+FRUIT_MIN_SPEED_Y: float = -12.0
+FRUIT_MAX_SPEED_Y: float = -18.0
+FRUIT_MIN_SPEED_X: float = -4.0
+FRUIT_MAX_SPEED_X: float = 4.0
+FRUIT_RADIUS: int = 40
+SLASH_MAX_POINTS: int = 15
+MIN_SLASH_VELOCITY: float = 15.0  # Pixels per frame to count as a slice
+
+# ── Flappy Bird tuning ───────────────────────────────────────────────────────
+FLAPPY_GRAVITY: float = 0.6
+FLAPPY_FLAP_POWER: float = -10.0
+FLAPPY_PIPE_SPEED: float = 5.0
+FLAPPY_INITIAL_GAP: int = 250
+FLAPPY_MIN_GAP: int = 160
+FLAPPY_GAP_REDUCTION: float = 5.0  # reduction per point
+FLAPPY_PIPE_WIDTH: int = 80
+FLAPPY_PIPE_SPACING: int = 400     # horizontal distance between pipes
+FLAPPY_BIRD_SIZE: int = 40
+FLAPPY_FLAP_THRESHOLD: float = 15.0 # pixels to move down to trigger flap
+
+# ── Air Drumming tuning ──────────────────────────────────────────────────────
+DRUM_LANE_COUNT: int = 4
+DRUM_TILE_SPEED: float = 6.0
+DRUM_HIT_THRESHOLD: float = 12.0  # Downward velocity threshold
+DRUM_LANE_WIDTH: int = 200
+DRUM_TILE_HEIGHT: int = 40
+DRUM_HIT_ZONE_Y: int = 600       # Y-coordinate where tiles must be hit
 
 # ── Finger landmark indices (MediaPipe convention) ───────────────────────────
 WRIST           = 0

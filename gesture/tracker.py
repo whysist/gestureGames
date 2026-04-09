@@ -55,15 +55,16 @@ class HandTracker:
     ) -> Optional[List[Dict[str, Any]]]:
         """
         Run hand detection on *frame* (BGR, already flipped to mirror mode).
-
-        Returns a list of hands, each hand being a dict:
-          {
-            "landmarks": list of 21 (x, y, z) tuples,
-            "label": "Left" or "Right"
-          }
-        Returns None if no hands detected.
+        
+        Optimized: Resizes frame internally for faster processing.
         """
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Downsample for processing (e.g., target 480p width)
+        h, w = frame.shape[:2]
+        proc_w = 640
+        proc_h = int(h * (proc_w / w))
+        small_frame = cv2.resize(frame, (proc_w, proc_h))
+        
+        rgb = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
         rgb.flags.writeable = False
         results = self._hands.process(rgb)
         self._last_results = results
