@@ -19,3 +19,15 @@ A game you play using your hands and your camera!
 
 ## WHERE ARE MY PHOTOS?
 Check the folder called `captures`. Your selfies are saved there!
+
+```markdown
+# GESTURE ARCADE 🖐️
+
+A game you play using your hands and your camera!
+
+### 🚀 How to Run
+1. **Get the code** (Download this folder).
+2. **Install the magic stuff**:
+   Open your terminal and type:
+   ```bash
+   pip install pygame mediapipe opencv-python numpy
