@@ -243,8 +243,8 @@ class FruitNinjaGame(BaseGame):
     def _update_slashes(self, hand_data: Optional[List[Dict[str, Any]]]):
         active_hand_ids = []
         if hand_data:
-            for i, hand in enumerate(hand_data):
-                hand_id = i 
+            for hand in hand_data:
+                hand_id = hand["id"]
                 active_hand_ids.append(hand_id)
                 landmarks = hand["landmarks"]
                 tip_pos = self.tracker.get_fingertip(landmarks, INDEX_TIP)

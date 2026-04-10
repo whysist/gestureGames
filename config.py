@@ -10,8 +10,16 @@ FPS: int = 60        # base target; pong_game targets 90 and drops frames gracef
 
 # ── MediaPipe ────────────────────────────────────────────────────────────────
 HAND_DETECTION_CONFIDENCE: float = 0.7
-HAND_TRACKING_CONFIDENCE: float = 0.5
+HAND_TRACKING_CONFIDENCE: float = 0.7   # Increased for better stability
 MAX_NUM_HANDS: int = 2
+HAND_MODEL_COMPLEXITY: int = 1         # 0 = simple, 1 = accurate
+
+# Tracking & Filtering
+FILTER_ENABLE: bool = True
+FILTER_MIN_CUTOFF: float = 0.8        # Lower = smoother rest
+FILTER_BETA: float = 0.05             # Higher = less lag during movement
+HAND_PERSISTENCE_THRESHOLD: float = 0.15 # Max distance to associate hands between frames
+
 FACE_DETECTION_CONFIDENCE: float = 0.5
 MAX_NUM_FACES: int = 4
 

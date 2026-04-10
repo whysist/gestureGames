@@ -57,19 +57,28 @@ class PongGame(BaseGame):
         right_hand_active = False
         
         if hand_data:
+            # Sort hands by X-coordinate of palm center for robust side-mapping
+            hands_with_pos = []
             for hand in hand_data:
-                landmarks = hand["landmarks"]
-                label = hand["label"]
-                cx, cy = self.tracker.get_palm_center(landmarks)
-                
-                # Mapping: MediaPipe "Left" -> Left Paddle, "Right" -> Right Paddle
-                # Note: In mirror mode, MediaPipe usually swaps these labels relative to the user.
-                # If your actual right hand controls the left paddle, swap these strings.
-                if label == "Left":
+                cx, cy = self.tracker.get_palm_center(hand["landmarks"])
+                hands_with_pos.append((cx, cy, hand))
+            
+            # Sort by cx (left to right)
+            hands_with_pos.sort(key=lambda item: item[0])
+
+            if len(hands_with_pos) == 1:
+                cx, cy, _ = hands_with_pos[0]
+                # If only one hand, decide which paddle it controls based on screen side
+                if cx < SCREEN_WIDTH // 2:
                     self.player_rect.centery = cy
-                elif label == "Right":
+                else:
                     self.ai_rect.centery = cy
                     right_hand_active = True
+            else:
+                # Two or more hands: left-most controls player, right-most controls AI/P2
+                self.player_rect.centery = hands_with_pos[0][1]
+                self.ai_rect.centery = hands_with_pos[-1][1]
+                right_hand_active = True
 
         # Clamp paddles
         self.player_rect.top = max(0, min(SCREEN_HEIGHT - PADDLE_HEIGHT, self.player_rect.top))

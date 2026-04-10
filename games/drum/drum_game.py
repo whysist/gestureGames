@@ -81,8 +81,8 @@ class DrumGame(BaseGame):
         # 3. Gesture Detection (Hits)
         current_hand_ids = []
         if hand_data:
-            for i, hand in enumerate(hand_data):
-                hand_id = hand["label"] + str(i) # Simple ID
+            for hand in hand_data:
+                hand_id = hand["id"]
                 current_hand_ids.append(hand_id)
                 landmarks = hand["landmarks"]
                 cx, cy = self.tracker.get_palm_center(landmarks)
