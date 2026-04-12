@@ -104,3 +104,14 @@ INDEX_TIP       = 8
 MIDDLE_TIP      = 12
 RING_TIP        = 16
 PINKY_TIP       = 20
+
+# ── Subway Surfer tuning ─────────────────────────────────────────────────────
+SURFER_INITIAL_SPEED:    float = 5.0
+SURFER_SPEED_INCREMENT:  float = 0.0008   # per frame
+SURFER_MAX_SPEED:        float = 28.0
+SURFER_NUM_LANES:        int   = 3
+SURFER_LANE_WIDTH:       int   = 220
+SURFER_SWIPE_THRESHOLD:  int   = 55       # pixels net horizontal motion
+SURFER_SWIPE_COOLDOWN:   int   = 28       # frames between swipes
+SURFER_BASE_SPAWN:       int   = 110      # frames between trains
+SURFER_MIN_SPAWN:        int   = 38

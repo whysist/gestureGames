@@ -25,8 +25,8 @@ class Hub:
             {"name": "Fruit Ninja", "status": "READY", "key": pygame.K_2},
             {"name": "Point Selfie", "status": "READY", "key": pygame.K_3},
             {"name": "Flappy Bird", "status": "READY", "key": pygame.K_4},
-            {"name": "Air Drumming", "status": "READY", "key": pygame.K_5},
-            {"name": "Coming Soon", "status": "SOON", "key": pygame.K_6},
+            {"name": "Air Drumming",    "status": "READY", "key": pygame.K_5},
+            {"name": "Subway Surfer",   "status": "READY", "key": pygame.K_6},
         ]
         # TODO: register new mini-game here
 
@@ -87,5 +87,6 @@ class Hub:
                 return "flappy"
             if event.key == pygame.K_5:
                 return "drum"
-            # Keys 2, 3, 4 do nothing as status is COMING SOON
+            if event.key == pygame.K_6:
+                return "surfer"
         return None

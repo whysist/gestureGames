@@ -13,6 +13,7 @@ from games.ninja.fruit_ninja import FruitNinjaGame
 from games.flappy.flappy_game import FlappyGame
 from games.selfie.point_selfie import PointSelfieGame
 from games.drum.drum_game import DrumGame
+from games.surfer.subway_surfer import SubwaySurferGame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 
 def main():
@@ -38,6 +39,7 @@ def main():
     flappy = FlappyGame(screen, clock, tracker)
     selfie = PointSelfieGame(screen, clock, tracker)
     drum = DrumGame(screen, clock, tracker)
+    surfer = SubwaySurferGame(screen, clock, tracker)
     
     current_state = "HUB"
     active_game = None
@@ -89,6 +91,10 @@ def main():
                 elif selection == "drum":
                     drum.reset()
                     active_game = drum
+                    current_state = "GAME"
+                elif selection == "surfer":
+                    surfer.reset()
+                    active_game = surfer
                     current_state = "GAME"
                 
             elif current_state == "GAME":
