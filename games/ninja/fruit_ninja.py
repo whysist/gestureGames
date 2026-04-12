@@ -250,7 +250,7 @@ class FruitNinjaGame(BaseGame):
                 tip_pos = self.tracker.get_fingertip(landmarks, INDEX_TIP)
                 
                 if hand_id not in self.slashes:
-                    self.slashes[hand_id] = Slash(NEON_CYAN if i == 0 else NEON_MAGENTA)
+                    self.slashes[hand_id] = Slash(NEON_CYAN if hand_id == 0 else NEON_MAGENTA)
                 
                 slash = self.slashes[hand_id]
                 old_pos = slash.points[-1] if slash.points else None

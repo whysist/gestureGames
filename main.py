@@ -6,6 +6,8 @@ import pygame
 import cv2
 import time
 import sys
+import subprocess
+import os
 from gesture.tracker import HandTracker
 from ui.hub import Hub
 from games.pong.pong_game import PongGame
@@ -13,8 +15,13 @@ from games.ninja.fruit_ninja import FruitNinjaGame
 from games.flappy.flappy_game import FlappyGame
 from games.selfie.point_selfie import PointSelfieGame
 from games.drum.drum_game import DrumGame
-from games.surfer.subway_surfer import SubwaySurferGame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
+
+# Path to the standalone subway-surfer script
+_SURFER_SCRIPT = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "games", "subway-surfer", "run.py"
+)
 
 def main():
     # ── Initialization ────────────────────────────────────────────────────────
@@ -39,7 +46,6 @@ def main():
     flappy = FlappyGame(screen, clock, tracker)
     selfie = PointSelfieGame(screen, clock, tracker)
     drum = DrumGame(screen, clock, tracker)
-    surfer = SubwaySurferGame(screen, clock, tracker)
     
     current_state = "HUB"
     active_game = None
@@ -93,9 +99,16 @@ def main():
                     active_game = drum
                     current_state = "GAME"
                 elif selection == "surfer":
-                    surfer.reset()
-                    active_game = surfer
-                    current_state = "GAME"
+                    # Launch the standalone subway-surfer script as a subprocess.
+                    # Release the webcam so run.py can open its own capture.
+                    cap.release()
+                    proc = subprocess.Popen([sys.executable, _SURFER_SCRIPT])
+                    proc.wait()   # block until the user closes run.py (ESC)
+                    # Re-open the webcam for the hub
+                    cap = cv2.VideoCapture(0)
+                    if not cap.isOpened():
+                        print("Warning: Could not reopen webcam after surfer exited.")
+                    current_state = "HUB"
                 
             elif current_state == "GAME":
                 if event.type == pygame.MOUSEBUTTONDOWN and active_game:
