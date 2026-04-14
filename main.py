@@ -11,10 +11,7 @@ import os
 from gesture.tracker import HandTracker
 from ui.hub import Hub
 from games.pong.pong_game import PongGame
-from games.ninja.fruit_ninja import FruitNinjaGame
-from games.flappy.flappy_game import FlappyGame
 from games.selfie.point_selfie import PointSelfieGame
-from games.drum.drum_game import DrumGame
 from games.breakout.brick_breaker import BreakoutGame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 
@@ -43,10 +40,7 @@ def main():
     # Hub and Games
     hub = Hub(screen)
     pong = PongGame(screen, clock, tracker)
-    ninja = FruitNinjaGame(screen, clock, tracker)
-    flappy = FlappyGame(screen, clock, tracker)
     selfie = PointSelfieGame(screen, clock, tracker)
-    drum = DrumGame(screen, clock, tracker)
     breakout = BreakoutGame(screen, clock, tracker)
     
     current_state = "HUB"
@@ -84,21 +78,9 @@ def main():
                     pong.reset()
                     active_game = pong
                     current_state = "GAME"
-                elif selection == "ninja":
-                    ninja.reset()
-                    active_game = ninja
-                    current_state = "GAME"
-                elif selection == "flappy":
-                    flappy.reset()
-                    active_game = flappy
-                    current_state = "GAME"
                 elif selection == "selfie":
                     selfie.reset()
                     active_game = selfie
-                    current_state = "GAME"
-                elif selection == "drum":
-                    drum.reset()
-                    active_game = drum
                     current_state = "GAME"
                 elif selection == "surfer":
                     # Launch the standalone subway-surfer script as a subprocess.

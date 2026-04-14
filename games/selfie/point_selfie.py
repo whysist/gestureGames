@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple, Any, Dict
 
 from games.base_game import BaseGame
 from gesture.face_tracker import FaceTracker
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, BLACK, WHITE
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, BLACK, WHITE, HUB_BG, HUB_ACCENT
 
 class PointSelfieGame(BaseGame):
     def __init__(self, screen, clock, tracker):
@@ -57,7 +57,7 @@ class PointSelfieGame(BaseGame):
         
         # 2. Right side: Points and Connections
         right_rect = pygame.Rect(half_w, 0, half_w, SCREEN_HEIGHT)
-        pygame.draw.rect(screen, (5, 5, 15), right_rect)
+        pygame.draw.rect(screen, HUB_BG, right_rect)
         
         # Access connections from FaceTracker's mediapipe module
         connections = self.face_tracker._mp_face_mesh.FACEMESH_TESSELATION
@@ -75,7 +75,7 @@ class PointSelfieGame(BaseGame):
                     (half_w + int(start_lm[0] * half_w), int(start_lm[1] * SCREEN_HEIGHT)),
                     (half_w + int(end_lm[0] * half_w), int(end_lm[1] * SCREEN_HEIGHT))
                 ]
-                pygame.draw.line(screen, (100, 100, 200), pts[0], pts[1], 1)
+                pygame.draw.line(screen, (100, 120, 140), pts[0], pts[1], 1)
 
             # Draw Points
             for lm in face_lms:
@@ -89,8 +89,8 @@ class PointSelfieGame(BaseGame):
         
         # Capture Button
         self.btn_rect = pygame.Rect(half_w - 60, SCREEN_HEIGHT - 100, 120, 60)
-        pygame.draw.rect(screen, (0, 240, 255), self.btn_rect, border_radius=15, width=2)
-        cap_text = self.font.render("PHOTO", True, (0, 240, 255))
+        pygame.draw.rect(screen, HUB_ACCENT, self.btn_rect, border_radius=15, width=2)
+        cap_text = self.font.render("PHOTO", True, HUB_ACCENT)
         screen.blit(cap_text, (self.btn_rect.centerx - cap_text.get_width() // 2, 
                                self.btn_rect.centery - cap_text.get_height() // 2))
 

@@ -10,7 +10,10 @@ import random
 from typing import List, Dict, Any, Optional
 
 from games.base_game import BaseGame
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, NEON_CYAN, NEON_MAGENTA, INDEX_TIP
+from config import (
+    SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, INDEX_TIP,
+    HUB_BG, HUB_TITLE_COLOR, HUB_ACCENT, HUB_READY_COLOR, HUB_CARD_BG, HUB_CARD_BORDER
+)
 
 
 # ---------------- BALL ----------------
@@ -39,10 +42,10 @@ class Ball:
             self.dy = abs(self.dy)
 
     def draw(self, screen):
-        pygame.draw.circle(screen, NEON_CYAN, (int(self.x), int(self.y)), self.radius)
-        # Glow halo
+        pygame.draw.circle(screen, HUB_TITLE_COLOR, (int(self.x), int(self.y)), self.radius)
+        # Glow halo (Amber pulse)
         glow_surf = pygame.Surface((self.radius * 4, self.radius * 4), pygame.SRCALPHA)
-        pygame.draw.circle(glow_surf, (0, 240, 255, 60), (self.radius * 2, self.radius * 2), self.radius * 2)
+        pygame.draw.circle(glow_surf, (241, 196, 15, 60), (self.radius * 2, self.radius * 2), self.radius * 2)
         screen.blit(glow_surf, (int(self.x) - self.radius * 2, int(self.y) - self.radius * 2))
 
 
@@ -231,25 +234,25 @@ class BreakoutGame(BaseGame):
 
     # ---------------- DRAW ----------------
     def draw(self, screen: pygame.Surface):
-        screen.fill((10, 10, 25))
+        screen.fill(HUB_BG)
 
         # ── Level Select Screen ──────────────────────────────────────────────
         if self.game_state == "LEVEL_SELECT":
             # Title
-            title = self.large_font.render("Brick Breaker", True, NEON_CYAN)
+            title = self.large_font.render("Brick Breaker", True, HUB_TITLE_COLOR)
             screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, 90))
 
-            sub = self.small_font.render("Move your index finger left/right to control the paddle", True, (160, 160, 200))
+            sub = self.small_font.render("Move your index finger left/right to control the paddle", True, (180, 200, 220))
             screen.blit(sub, (SCREEN_WIDTH // 2 - sub.get_width() // 2, 180))
 
-            hint = self.small_font.render("☆ Yellow bricks spawn an extra ball!", True, (255, 220, 0))
+            hint = self.small_font.render("☆ Yellow bricks spawn an extra ball!", True, HUB_ACCENT)
             screen.blit(hint, (SCREEN_WIDTH // 2 - hint.get_width() // 2, 210))
 
             # Difficulty cards
             difficulties = [
-                ("1", "Easy",   "Slow ball · Wide paddle",  NEON_CYAN),
-                ("2", "Medium", "Normal ball · Mid paddle",  NEON_MAGENTA),
-                ("3", "Hard",   "Fast ball · Narrow paddle", (255, 80, 80)),
+                ("1", "Easy",   "Slow ball · Wide paddle",  HUB_READY_COLOR),
+                ("2", "Medium", "Normal ball · Mid paddle",  HUB_ACCENT),
+                ("3", "Hard",   "Fast ball · Narrow paddle", (231, 76, 60)), # Alert red
             ]
             card_w, card_h = 220, 160
             total_w = len(difficulties) * card_w + (len(difficulties) - 1) * 30
@@ -259,7 +262,7 @@ class BreakoutGame(BaseGame):
                 cx = sx + i * (card_w + 30)
                 cy = 290
                 card_rect = pygame.Rect(cx, cy, card_w, card_h)
-                pygame.draw.rect(screen, (18, 22, 42), card_rect, border_radius=14)
+                pygame.draw.rect(screen, HUB_CARD_BG, card_rect, border_radius=14)
                 pygame.draw.rect(screen, col, card_rect, width=2, border_radius=14)
 
                 k_surf = self.font.render(f"[{key}]", True, col)
@@ -268,7 +271,7 @@ class BreakoutGame(BaseGame):
                 l_surf = self.font.render(label, True, WHITE)
                 screen.blit(l_surf, (cx + card_w // 2 - l_surf.get_width() // 2, cy + 60))
 
-                d_surf = self.small_font.render(desc, True, (140, 140, 170))
+                d_surf = self.small_font.render(desc, True, (180, 200, 220))
                 screen.blit(d_surf, (cx + card_w // 2 - d_surf.get_width() // 2, cy + 108))
 
             return
@@ -279,17 +282,17 @@ class BreakoutGame(BaseGame):
         for brick in self.bricks:
             brick.draw(screen)
 
-        # Draw paddle with gradient-ish effect
+        # Draw paddle with theme accents
         paddle_rect = pygame.Rect(
             self.paddle_x - self.paddle_width // 2,
             self.paddle_y,
             self.paddle_width,
             self.paddle_height
         )
-        pygame.draw.rect(screen, NEON_MAGENTA, paddle_rect, border_radius=8)
+        pygame.draw.rect(screen, HUB_ACCENT, paddle_rect, border_radius=8)
         # Top shine strip
         shine = pygame.Rect(paddle_rect.x + 4, paddle_rect.y + 2, paddle_rect.width - 8, 4)
-        pygame.draw.rect(screen, (255, 160, 240), shine, border_radius=4)
+        pygame.draw.rect(screen, (255, 230, 150), shine, border_radius=4)
 
         # Draw balls
         for ball in self.balls:
@@ -300,7 +303,7 @@ class BreakoutGame(BaseGame):
         screen.blit(score_surf, (SCREEN_WIDTH - score_surf.get_width() - 20, SCREEN_HEIGHT - 44))
 
         # Active ball count
-        ball_surf = self.small_font.render(f"Balls: {len(self.balls)}", True, NEON_CYAN)
+        ball_surf = self.small_font.render(f"Balls: {len(self.balls)}", True, (180, 200, 220))
         screen.blit(ball_surf, (20, SCREEN_HEIGHT - 36))
 
         # ── Finish Overlay ───────────────────────────────────────────────────
@@ -312,10 +315,10 @@ class BreakoutGame(BaseGame):
 
             if self._won:
                 msg_text = "You Win!"
-                msg_color = NEON_CYAN
+                msg_color = HUB_READY_COLOR
             else:
                 msg_text = "Game Over"
-                msg_color = (255, 80, 80)
+                msg_color = (231, 76, 60)
 
             msg = self.large_font.render(msg_text, True, msg_color)
             screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, SCREEN_HEIGHT // 2 - 100))
@@ -323,7 +326,7 @@ class BreakoutGame(BaseGame):
             sc = self.font.render(f"Final Score: {self._score}", True, WHITE)
             screen.blit(sc, (SCREEN_WIDTH // 2 - sc.get_width() // 2, SCREEN_HEIGHT // 2 - 20))
 
-            sub = self.font.render("Press ESC to Exit", True, NEON_CYAN)
+            sub = self.font.render("Press ESC to Exit", True, HUB_ACCENT)
             screen.blit(sub, (SCREEN_WIDTH // 2 - sub.get_width() // 2, SCREEN_HEIGHT // 2 + 40))
 
     # ---------------- OVERLAY (PiP camera) ----------------

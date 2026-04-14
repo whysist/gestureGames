@@ -40,21 +40,21 @@ FRUIT_ORANGE = (255, 165, 0)
 FRUIT_WATERMELON = (50, 205, 50)
 FRUIT_BOMB   = (50, 50, 50)
 
-# Hub palette
-HUB_BG           = (  8,   8,  18)   # near-black with a hint of blue
-HUB_CARD_BG      = ( 18,  22,  42)
-HUB_CARD_BORDER  = ( 40,  60, 100)
-HUB_TITLE_COLOR  = NEON_CYAN
-HUB_READY_COLOR  = NEON_GREEN
-HUB_SOON_COLOR   = GRAY
-HUB_ACCENT       = NEON_MAGENTA
+# Hub palette (Serenity Slate / Mental Clarity)
+HUB_BG           = ( 52,  73,  94)   # Soft Slate Blue
+HUB_CARD_BG      = ( 72,  92, 112)   # Modern Steel
+HUB_CARD_BORDER  = (100, 120, 140)
+HUB_TITLE_COLOR  = (241, 196, 15)   # Warm Amber / Gold
+HUB_READY_COLOR  = ( 46, 204, 113)   # Vibrant Emerald
+HUB_SOON_COLOR   = (150, 160, 175)
+HUB_ACCENT       = (241, 196, 15)
 
-# Pong palette
-PONG_BG          = (  5,   5,  15)
-PONG_BALL_COLOR  = NEON_YELLOW
-PONG_PLAYER_COLOR= NEON_CYAN
-PONG_AI_COLOR    = NEON_MAGENTA
-PONG_NET_COLOR   = ( 60,  60,  80)
+# Themes & Palettes (Optimized for Focus)
+PONG_BG          = HUB_BG
+PONG_BALL_COLOR  = (241, 196, 15)   # Gold ball
+PONG_PLAYER_COLOR= ( 52, 152, 219)   # Calm Bright Blue
+PONG_AI_COLOR    = (231,  76,  60)   # Alert Red (for opponent)
+PONG_NET_COLOR   = ( 80, 100, 120)
 PONG_SCORE_COLOR = WHITE
 
 # ── Pong game tuning ─────────────────────────────────────────────────────────
