@@ -1,7 +1,8 @@
-"""
-config.py — Shared constants for GestureArcade.
-All modules import from here so values stay in one place.
-"""
+import os
+from dotenv import load_dotenv
+
+# Load environment variables (GMAIL_USER, GMAIL_PASS)
+load_dotenv()
 
 # ── Display ─────────────────────────────────────────────────────────────────
 SCREEN_WIDTH: int = 1280
@@ -115,3 +116,10 @@ SURFER_SWIPE_THRESHOLD:  int   = 55       # pixels net horizontal motion
 SURFER_SWIPE_COOLDOWN:   int   = 28       # frames between swipes
 SURFER_BASE_SPAWN:       int   = 110      # frames between trains
 SURFER_MIN_SPAWN:        int   = 38
+
+# ── Email System ─────────────────────────────────────────────────────────────
+# Use an App Password if using Gmail (security requirement)
+SMTP_SERVER   = "smtp.gmail.com"
+SMTP_PORT     = 587
+SENDER_EMAIL  = os.getenv("GMAIL_USER", "workvasist@gmail.com")
+SENDER_PASS   = os.getenv("GMAIL_PASS", "VASist@2006") # Fallback to prevent crash

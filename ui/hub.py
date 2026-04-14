@@ -22,7 +22,7 @@ class Hub:
         # Game registration
         self.games = [
             {"name": "Gesture Pong",   "id": "pong",    "key": pygame.K_1},
-            {"name": "Point Selfie",   "id": "selfie",  "key": pygame.K_2},
+            {"name": "AR Companion",   "id": "selfie",  "key": pygame.K_2},
             {"name": "Subway Surfer",  "id": "surfer",  "key": pygame.K_3},
             {"name": "Brick Breaker",  "id": "breakout", "key": pygame.K_4},
         ]
@@ -68,7 +68,7 @@ class Hub:
             hint_font = pygame.font.SysFont("Arial", 18)
             hints = [
                 "Test your reflexes",
-                "Capture the moment",
+                "Try AR Filters",
                 "Swipe to survive",
                 "Classic brick action"
             ]

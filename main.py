@@ -11,7 +11,7 @@ import os
 from gesture.tracker import HandTracker
 from ui.hub import Hub
 from games.pong.pong_game import PongGame
-from games.selfie.point_selfie import PointSelfieGame
+from games.ar_companion.ar_companion import ARCompanionGame
 from games.breakout.brick_breaker import BreakoutGame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 
@@ -30,6 +30,9 @@ def main():
     
     # Camera setup
     cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, SCREEN_WIDTH)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, SCREEN_HEIGHT)
+    
     if not cap.isOpened():
         print("Error: Could not open webcam.")
         sys.exit()
@@ -40,12 +43,33 @@ def main():
     # Hub and Games
     hub = Hub(screen)
     pong = PongGame(screen, clock, tracker)
-    selfie = PointSelfieGame(screen, clock, tracker)
+    ar_companion = ARCompanionGame(screen, clock, tracker)
     breakout = BreakoutGame(screen, clock, tracker)
     
     current_state = "HUB"
     active_game = None
+    camera_index = 0
     
+    def cycle_camera(current_index, current_cap):
+        next_index = current_index + 1
+        print(f"Switching camera to index {next_index}...")
+        new_cap = cv2.VideoCapture(next_index)
+        
+        # Set High Definition resolution for the new camera
+        new_cap.set(cv2.CAP_PROP_FRAME_WIDTH, SCREEN_WIDTH)
+        new_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, SCREEN_HEIGHT)
+        
+        if not new_cap.isOpened():
+            print("No more cameras found. Looping back to 0.")
+            new_cap.release()
+            new_cap = cv2.VideoCapture(0)
+            new_cap.set(cv2.CAP_PROP_FRAME_WIDTH, SCREEN_WIDTH)
+            new_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, SCREEN_HEIGHT)
+            return 0, new_cap
+        
+        current_cap.release()
+        return next_index, new_cap
+
     running = True
     while running:
         # 1. Capture and Process frame
@@ -71,6 +95,10 @@ def main():
                 else:
                     current_state = "HUB" # Return to hub
                     active_game = None
+            
+            # Global Camera Switch Key 'C' check in HUB or GAME
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+                camera_index, cap = cycle_camera(camera_index, cap)
 
             if current_state == "HUB":
                 selection = hub.get_game_selection(event)
@@ -79,8 +107,8 @@ def main():
                     active_game = pong
                     current_state = "GAME"
                 elif selection == "selfie":
-                    selfie.reset()
-                    active_game = selfie
+                    ar_companion.reset()
+                    active_game = ar_companion
                     current_state = "GAME"
                 elif selection == "surfer":
                     # Launch the standalone subway-surfer script as a subprocess.
@@ -107,13 +135,16 @@ def main():
                         current_state = "HUB"
                         active_game = None
                     # Check game-specific buttons (like Selfie Capture)
-                    elif isinstance(active_game, PointSelfieGame):
-                        if active_game.btn_rect.collidepoint(event.pos):
-                            active_game.take_selfie(screen)
+                    elif isinstance(active_game, ARCompanionGame):
+                        if not active_game.show_email_prompt:
+                            if active_game.btn_rect.collidepoint(event.pos):
+                                active_game.take_selfie(screen)
+                            elif active_game.done_btn_rect.collidepoint(event.pos):
+                                active_game.finish_session()
 
         # 3. Update logic
         if current_state == "GAME" and active_game:
-            if isinstance(active_game, PointSelfieGame):
+            if isinstance(active_game, ARCompanionGame):
                 active_game.update_with_frame(frame)
             else:
                 active_game.update(landmarks)
@@ -126,8 +157,8 @@ def main():
         if current_state == "HUB":
             hub.draw()
         elif current_state == "GAME" and active_game:
-            if isinstance(active_game, PointSelfieGame):
-                active_game.draw_split(screen, frame)
+            if isinstance(active_game, ARCompanionGame):
+                active_game.draw_full_ar(screen, frame)
             else:
                 active_game.draw(screen)
             
@@ -139,8 +170,8 @@ def main():
                 active_game = None
                 continue
             
-            # Show gesture overlay (PiP) - Skip for Point Selfie as it has its own camera view
-            if not isinstance(active_game, PointSelfieGame):
+            # Show gesture overlay (PiP) - Skip for AR Companion as it is full screen
+            if not isinstance(active_game, ARCompanionGame):
                 overlay = active_game.get_overlay_surface(frame)
                 screen.blit(overlay, (SCREEN_WIDTH - 340, 20))
             
@@ -160,7 +191,7 @@ def main():
     # ── Cleanup ───────────────────────────────────────────────────────────────
     cap.release()
     tracker.release()
-    selfie.face_tracker.release()
+    ar_companion.cleanup()
     pygame.quit()
     sys.exit()
 
