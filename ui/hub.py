@@ -21,14 +21,14 @@ class Hub:
         
         # Game registration
         self.games = [
-            {"name": "Gesture Pong", "status": "READY", "key": pygame.K_1},
-            {"name": "Fruit Ninja", "status": "READY", "key": pygame.K_2},
-            {"name": "Point Selfie", "status": "READY", "key": pygame.K_3},
-            {"name": "Flappy Bird", "status": "READY", "key": pygame.K_4},
-            {"name": "Air Drumming",    "status": "READY", "key": pygame.K_5},
-            {"name": "Subway Surfer",   "status": "READY", "key": pygame.K_6},
+            {"name": "Gesture Pong",   "status": "READY", "key": pygame.K_1},
+            {"name": "Fruit Ninja",    "status": "READY", "key": pygame.K_2},
+            {"name": "Point Selfie",   "status": "READY", "key": pygame.K_3},
+            {"name": "Flappy Bird",    "status": "READY", "key": pygame.K_4},
+            {"name": "Air Drumming",   "status": "READY", "key": pygame.K_5},
+            {"name": "Subway Surfer",  "status": "READY", "key": pygame.K_6},
+            {"name": "Brick Breaker",  "status": "READY", "key": pygame.K_7},
         ]
-        # TODO: register new mini-game here
 
     def draw(self):
         self.screen.fill(HUB_BG)
@@ -89,4 +89,6 @@ class Hub:
                 return "drum"
             if event.key == pygame.K_6:
                 return "surfer"
+            if event.key == pygame.K_7:
+                return "breakout"
         return None

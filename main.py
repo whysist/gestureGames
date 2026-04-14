@@ -15,6 +15,7 @@ from games.ninja.fruit_ninja import FruitNinjaGame
 from games.flappy.flappy_game import FlappyGame
 from games.selfie.point_selfie import PointSelfieGame
 from games.drum.drum_game import DrumGame
+from games.breakout.brick_breaker import BreakoutGame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 
 # Path to the standalone subway-surfer script
@@ -46,6 +47,7 @@ def main():
     flappy = FlappyGame(screen, clock, tracker)
     selfie = PointSelfieGame(screen, clock, tracker)
     drum = DrumGame(screen, clock, tracker)
+    breakout = BreakoutGame(screen, clock, tracker)
     
     current_state = "HUB"
     active_game = None
@@ -109,8 +111,14 @@ def main():
                     if not cap.isOpened():
                         print("Warning: Could not reopen webcam after surfer exited.")
                     current_state = "HUB"
+                elif selection == "breakout":
+                    breakout.reset()
+                    active_game = breakout
+                    current_state = "GAME"
                 
             elif current_state == "GAME":
+                if active_game and hasattr(active_game, 'handle_event'):
+                    active_game.handle_event(event)
                 if event.type == pygame.MOUSEBUTTONDOWN and active_game:
                     # Check universal exit button
                     if active_game.check_exit_click(event.pos):
