@@ -23,10 +23,8 @@ from collections import deque
 import mediapipe as mp
 import matplotlib.pyplot as plt
 
-# Initialize mediapipe pose class.
+# Initialize mediapipe pose class (Not used anymore, but keeping mp import setup)
 mp_pose = mp.solutions.pose
-pose_video = mp_pose.Pose(static_image_mode=False, model_complexity=1, min_detection_confidence=0.7,
-                          min_tracking_confidence=0.7)
 
 # Initialize mediapipe hands class.
 mp_hands = mp.solutions.hands
@@ -63,7 +61,27 @@ def detectHands(image, hands, draw=False):
     return output_image, results
 
 
-class NeutralSwipeController:
+class BaseHandController:
+    def __init__(self):
+        self.COOLDOWN_SEC = 0.45
+        self.last_action_time = 0.0
+        self.last_action = "None"
+        self.can_trigger = True
+        self.AUTO_REARM_SEC = 0.55
+
+    def _check_cooldown(self):
+        now = time_module.time()
+        if not self.can_trigger and (now - self.last_action_time >= self.AUTO_REARM_SEC):
+            self.can_trigger = True
+        return self.can_trigger and (now - self.last_action_time >= self.COOLDOWN_SEC)
+
+    def trigger(self, action):
+        self.last_action = action
+        self.last_action_time = time_module.time()
+        self.can_trigger = False
+        return action
+
+class IndexSwipeController:
     def __init__(self):
         # Settings (Suggested from 'earlier' model)
         self.HISTORY_SEC = 0.45
@@ -149,6 +167,84 @@ class NeutralSwipeController:
         cv2.putText(frame, f"READY: {self.can_trigger}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, status_color, 2)
         if not self.can_trigger:
             cv2.putText(frame, f"LAST: {self.last_action.upper()}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+        return frame
+
+class ThumbPointController(BaseHandController):
+    def __init__(self):
+        super().__init__()
+        self.THRESH = 0.08
+        self.last_pointer = (0, 0) # dx, dy
+
+    def update(self, results):
+        if not results or not results.multi_hand_landmarks: return None
+        if not self._check_cooldown(): return None
+
+        lms = results.multi_hand_landmarks[0].landmark
+        tip = lms[4] # Thumb Tip
+        mcp = lms[2] # Thumb MCP
+        
+        dx, dy = tip.x - mcp.x, tip.y - mcp.y
+        self.last_pointer = (dx, dy)
+
+        if abs(dx) > abs(dy):
+            if dx < -self.THRESH: return self.trigger("left")
+            if dx > self.THRESH: return self.trigger("right")
+        else:
+            if dy < -self.THRESH: return self.trigger("up")
+            if dy > self.THRESH: return self.trigger("down")
+        return None
+
+    def draw_hud(self, frame):
+        h, w, _ = frame.shape
+        cx, cy = w // 2, h // 2
+        dx, dy = self.last_pointer
+        cv2.line(frame, (cx, cy), (cx + int(dx*w*2), cy + int(dy*h*2)), (0, 255, 0), 4)
+        cv2.circle(frame, (cx, cy), 5, (255, 255, 255), -1)
+        return frame
+
+class VelocityHandController(BaseHandController):
+    def __init__(self):
+        super().__init__()
+        self.V_THRESH = 0.015
+        self.history = deque(maxlen=5)
+        self.last_v = (0, 0)
+
+    def update(self, results):
+        if not results or not results.multi_hand_landmarks: return None
+        
+        lms = results.multi_hand_landmarks[0].landmark
+        palm_indices = [0, 5, 9, 13, 17]
+        cx = sum(lms[i].x for i in palm_indices) / 5
+        cy = sum(lms[i].y for i in palm_indices) / 5
+        
+        self.history.append((time_module.time(), cx, cy))
+        if len(self.history) < 2: return None
+
+        if not self._check_cooldown(): return None
+
+        t0, x0, y0 = self.history[0]
+        t1, x1, y1 = self.history[-1]
+        dt = t1 - t0
+        if dt == 0: return None
+        
+        vx, vy = (x1 - x0) / dt, (y1 - y0) / dt
+        self.last_v = (vx * 0.05, vy * 0.05) # Scaled for HUD
+
+        if hypot(vx, vy) > self.V_THRESH * 100: # Sensitivity scaling
+            if abs(vx) > abs(vy):
+                if vx < 0: return self.trigger("left")
+                else: return self.trigger("right")
+            else:
+                if vy < 0: return self.trigger("up")
+                else: return self.trigger("down")
+        return None
+
+    def draw_hud(self, frame):
+        h, w, _ = frame.shape
+        # Just show a motion vector in the center
+        cx, cy = w//2, h//2
+        vx, vy = self.last_v
+        cv2.arrowedLine(frame, (cx, cy), (int(cx + vx*w), int(cy + vy*h)), (255, 0, 255), 3)
         return frame
 
 # checkHandGestures is legacy and replaced by NeutralSwipeController
@@ -351,15 +447,15 @@ def run():
     cv2.resizeWindow(win_name, ww, wh)
     cv2.moveWindow(win_name, sw - ww - 20, 20)
 
-    # App States: 'SELECTION', 'CALIBRATION', 'PLAYING'
-    app_state = 'SELECTION'
-    game_mode = None # 'BODY' or 'HAND'
+    # App States: 'HAND_MODE_SELECTION', 'CALIBRATION', 'PLAYING'
+    app_state = 'HAND_MODE_SELECTION'
+    hand_controller_mode = None # 'INDEX', 'THUMB', 'VELOCITY'
     
     game_started = False
     last_hand_gesture = ('Center', 'Standing')
     
-    # Initialize the Neutral Circle controller
-    swipe_controller = NeutralSwipeController()
+    # Initialize the controller placeholder
+    swipe_controller = None
 
     while camera_video.isOpened():
         ok, frame = camera_video.read()
@@ -371,70 +467,54 @@ def run():
         if k == 27: break
 
         # ── State Machine ──────────────────────────────────────────────────
-        if app_state == 'SELECTION':
-            cv2.putText(frame, 'SUBWAY SURFERS GESTURE', (w//2 - 140, h//2 - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-            cv2.putText(frame, 'Press B for BODY', (w//2 - 100, h//2), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-            cv2.putText(frame, 'Press H for HAND', (w//2 - 100, h//2 + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+        if app_state == 'HAND_MODE_SELECTION':
+            cv2.putText(frame, 'SELECT HAND CONTROLLER', (w//2 - 140, h//2 - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            cv2.putText(frame, '1. INDEX FINGER (Circle)', (w//2 - 100, h//2), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+            cv2.putText(frame, '2. THUMB POINTING', (w//2 - 100, h//2 + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+            cv2.putText(frame, '3. HAND VELOCITY (Swiping)', (w//2 - 100, h//2 + 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
             
-            if k == ord('b'):
-                game_mode = 'BODY'
+            if k == ord('1'):
+                hand_controller_mode = 'INDEX'
+                swipe_controller = IndexSwipeController()
                 app_state = 'CALIBRATION'
-            elif k == ord('h'):
-                game_mode = 'HAND'
+            elif k == ord('2'):
+                hand_controller_mode = 'THUMB'
+                swipe_controller = ThumbPointController()
+                app_state = 'CALIBRATION'
+            elif k == ord('3'):
+                hand_controller_mode = 'VELOCITY'
+                swipe_controller = VelocityHandController()
                 app_state = 'CALIBRATION'
 
         elif app_state == 'CALIBRATION':
             cv2.putText(frame, 'CALIBRATION', (w//2 - 60, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
-            cv2.putText(frame, f'MODE: {game_mode}', (w//2 - 60, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            cv2.putText(frame, f'MODE: {hand_controller_mode}', (w//2 - 60, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
             cv2.putText(frame, 'Press SPACE to Start', (w//2 - 90, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-            if game_mode == 'BODY':
-                frame, results = detectPose(frame, pose_video, draw=True)
-                if results.pose_landmarks and k == ord(' '):
-                    left_y = int(results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER].y * h)
-                    right_y = int(results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER].y * h)
-                    MID_Y = (right_y + left_y) // 2
-                    app_state = 'PLAYING'
-                    game_started = True
-            else: # HAND
-                frame, results = detectHands(frame, hands_video, draw=True)
-                if results.multi_hand_landmarks and k == ord(' '):
-                    app_state = 'PLAYING'
-                    game_started = True
+            frame, results = detectHands(frame, hands_video, draw=True)
+            if results and results.multi_hand_landmarks and k == ord(' '):
+                app_state = 'PLAYING'
+                game_started = True
+                # Critical Fix: Auto-focus the browser by clicking the center of the screen
+                try:
+                    pyautogui.click(sw//2, sh//2)
+                except:
+                    pass
 
         elif app_state == 'PLAYING':
-            if game_mode == 'BODY':
-                frame, results = detectPose(frame, pose_video, draw=True)
-                if results.pose_landmarks:
-                    horiz_pos = checkLeftRight(frame, results)
-                    posture = checkJumpCrouch(frame, results, MID_Y)
-                    
-                    # Horizontal control
-                    if horiz_pos == 'Left' and x_pos_index != 0:
-                        pyautogui.press('left')
-                        x_pos_index -= 1
-                    elif horiz_pos == 'Right' and x_pos_index != 2:
-                        pyautogui.press('right')
-                        x_pos_index += 1
-                    elif horiz_pos == 'Center':
-                        x_pos_index = 1
-                        
-                    # Vertical control
-                    if posture == 'Jumping' and y_pos_index == 1:
-                        pyautogui.press('up')
-                        y_pos_index += 1
-                    elif posture == 'Crouching' and y_pos_index == 1:
-                        pyautogui.press('down')
-                        y_pos_index -= 1
-                    elif posture == 'Standing' and y_pos_index != 1:
-                        y_pos_index = 1
-            else: # HAND mode
-                frame, results = detectHands(frame, hands_video, draw=False)
+            frame, results = detectHands(frame, hands_video, draw=False)
+            if swipe_controller:
                 action = swipe_controller.update(results)
                 frame = swipe_controller.draw_hud(frame)
                 
                 if action:
                     pyautogui.press(action)
+                
+                # Also draw general status
+                status_color = (0, 255, 0) if swipe_controller.can_trigger else (0, 0, 255)
+                cv2.putText(frame, f"{hand_controller_mode} READY: {swipe_controller.can_trigger}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, status_color, 2)
+                if not swipe_controller.can_trigger:
+                    cv2.putText(frame, f"LAST: {swipe_controller.last_action.upper()}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
 
             # Resume key (Space)
             if k == ord(' '):

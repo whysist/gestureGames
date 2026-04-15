@@ -11,7 +11,7 @@ import os
 from gesture.tracker import HandTracker
 from ui.hub import Hub
 from games.pong.pong_game import PongGame
-from games.ar_companion.ar_companion import ARCompanionGame
+from games.selfie.point_selfie import PointSelfieGame
 from games.breakout.brick_breaker import BreakoutGame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 
@@ -43,7 +43,7 @@ def main():
     # Hub and Games
     hub = Hub(screen)
     pong = PongGame(screen, clock, tracker)
-    ar_companion = ARCompanionGame(screen, clock, tracker)
+    ar_companion = PointSelfieGame(screen, clock, tracker)
     breakout = BreakoutGame(screen, clock, tracker)
     
     current_state = "HUB"
@@ -90,9 +90,7 @@ def main():
             
             # Global Escape Key
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                if current_state == "HUB":
-                    running = False # Quit app
-                else:
+                if current_state == "GAME":
                     current_state = "HUB" # Return to hub
                     active_game = None
             
@@ -101,6 +99,9 @@ def main():
                 camera_index, cap = cycle_camera(camera_index, cap)
 
             if current_state == "HUB":
+                if event.type == pygame.MOUSEBUTTONDOWN and hub.exit_click_rect.collidepoint(event.pos):
+                    running = False
+                    
                 selection = hub.get_game_selection(event)
                 if selection == "pong":
                     pong.reset()
@@ -135,7 +136,7 @@ def main():
                         current_state = "HUB"
                         active_game = None
                     # Check game-specific buttons (like Selfie Capture)
-                    elif isinstance(active_game, ARCompanionGame):
+                    elif isinstance(active_game, PointSelfieGame):
                         if not active_game.show_email_prompt:
                             if active_game.btn_rect.collidepoint(event.pos):
                                 active_game.take_selfie(screen)
@@ -144,7 +145,7 @@ def main():
 
         # 3. Update logic
         if current_state == "GAME" and active_game:
-            if isinstance(active_game, ARCompanionGame):
+            if isinstance(active_game, PointSelfieGame):
                 active_game.update_with_frame(frame)
             else:
                 active_game.update(landmarks)
@@ -157,8 +158,8 @@ def main():
         if current_state == "HUB":
             hub.draw()
         elif current_state == "GAME" and active_game:
-            if isinstance(active_game, ARCompanionGame):
-                active_game.draw_full_ar(screen, frame)
+            if isinstance(active_game, PointSelfieGame):
+                active_game.draw_split(screen, frame)
             else:
                 active_game.draw(screen)
             
@@ -171,7 +172,7 @@ def main():
                 continue
             
             # Show gesture overlay (PiP) - Skip for AR Companion as it is full screen
-            if not isinstance(active_game, ARCompanionGame):
+            if not isinstance(active_game, PointSelfieGame):
                 overlay = active_game.get_overlay_surface(frame)
                 screen.blit(overlay, (SCREEN_WIDTH - 340, 20))
             

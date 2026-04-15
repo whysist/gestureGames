@@ -22,10 +22,12 @@ class Hub:
         # Game registration
         self.games = [
             {"name": "Gesture Pong",   "id": "pong",    "key": pygame.K_1},
-            {"name": "AR Companion",   "id": "selfie",  "key": pygame.K_2},
+            {"name": "Point Selfie",   "id": "selfie",  "key": pygame.K_2},
             {"name": "Subway Surfer",  "id": "surfer",  "key": pygame.K_3},
             {"name": "Brick Breaker",  "id": "breakout", "key": pygame.K_4},
         ]
+        
+        self.exit_click_rect = pygame.Rect(SCREEN_WIDTH - 60, 20, 40, 40)
 
     def draw(self):
         self.screen.fill(HUB_BG)
@@ -68,7 +70,7 @@ class Hub:
             hint_font = pygame.font.SysFont("Arial", 18)
             hints = [
                 "Test your reflexes",
-                "Try AR Filters",
+                "Wondered how your face looks to a robot ?",
                 "Swipe to survive",
                 "Classic brick action"
             ]
@@ -82,6 +84,12 @@ class Hub:
             pygame.draw.rect(self.screen, HUB_READY_COLOR, badge_bg_rect, width=1, border_radius=12)
             
             self.screen.blit(badge_surf, (badge_bg_rect.centerx - badge_surf.get_width() // 2, badge_bg_rect.centery - badge_surf.get_height() // 2))
+
+        # Close Button
+        pygame.draw.circle(self.screen, (200, 50, 50), self.exit_click_rect.center, 20)
+        x_surf = self.badge_font.render("X", True, WHITE)
+        self.screen.blit(x_surf, (self.exit_click_rect.centerx - x_surf.get_width()//2,
+                                  self.exit_click_rect.centery - x_surf.get_height()//2))
 
     def get_game_selection(self, event):
         if event.type == pygame.KEYDOWN:
